@@ -6,331 +6,81 @@
   <title>KOL 評估工具</title>
   <style>
     :root{
-      --bg:#f7f7f5;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --soft:#f9fafb;
-      --shadow:0 8px 24px rgba(15,23,42,.06);
-      --green:#15803d;
-      --green-bg:#dcfce7;
-      --orange:#c2410c;
-      --orange-bg:#ffedd5;
-      --red:#b91c1c;
-      --red-bg:#fee2e2;
-      --yellow:#a16207;
-      --yellow-bg:#fef3c7;
-      --accent:#111827;
+      --bg:#f7f7f5; --card:#ffffff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --soft:#f9fafb;
+      --shadow:0 8px 24px rgba(15,23,42,.06); --green:#15803d; --green-bg:#dcfce7; --orange:#c2410c;
+      --orange-bg:#ffedd5; --red:#b91c1c; --red-bg:#fee2e2; --yellow:#a16207; --accent:#111827;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
-      line-height:1.5;
-    }
-    .wrap{
-      max-width:1240px;
-      margin:28px auto 48px;
-      padding:0 18px;
-    }
-    .page-title{
-      margin-bottom:18px;
-    }
-    .page-title h1{
-      margin:0 0 6px;
-      font-size:28px;
-      font-weight:800;
-      letter-spacing:.2px;
-    }
-    .page-title p{
-      margin:0;
-      color:var(--muted);
-      font-size:14px;
-    }
-    .layout{
-      display:grid;
-      grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);
-      gap:18px;
-      align-items:start;
-    }
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .card-header{
-      padding:18px 20px;
-      border-bottom:1px solid var(--line);
-      background:#fff;
-    }
-    .card-header h2{
-      margin:0;
-      font-size:18px;
-      font-weight:800;
-    }
-    .card-body{
-      padding:18px 20px 20px;
-    }
-    .section{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-      margin-bottom:16px;
-      background:#fff;
-    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif;line-height:1.5}
+    .wrap{max-width:1240px;margin:28px auto 48px;padding:0 18px}
+    .page-title{margin-bottom:18px}
+    .page-title h1{margin:0 0 6px;font-size:28px;font-weight:800}
+    .page-title p{margin:0;color:var(--muted);font-size:14px}
+    .layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);gap:18px;align-items:start}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+    .card-header{padding:18px 20px;border-bottom:1px solid var(--line);background:#fff}
+    .card-header h2{margin:0;font-size:18px;font-weight:800}
+    .card-body{padding:18px 20px 20px}
+    .section{border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;background:#fff}
     .section:last-child{margin-bottom:0}
-    .section h3{
-      margin:0 0 14px;
-      font-size:16px;
-      font-weight:800;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:14px 16px;
-    }
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
+    .section h3{margin:0 0 14px;font-size:16px;font-weight:800}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+    .field{display:flex;flex-direction:column;gap:6px}
     .field.full{grid-column:1 / -1}
-    label{
-      font-size:13px;
-      font-weight:700;
+    label{font-size:13px;font-weight:700}
+    .hint{color:var(--muted);font-size:12px}
+    .meta-label{font-size:12px;color:var(--muted);font-weight:500;margin-left:4px}
+    .required{color:var(--red);margin-left:2px}
+    input[type="text"], input[type="number"], select{
+      width:100%;border:1px solid #d1d5db;border-radius:12px;background:#fff;padding:11px 12px;font-size:14px;color:var(--text);transition:.15s ease
     }
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-    }
-    input[type="text"],
-    input[type="number"],
-    select{
-      width:100%;
-      border:1px solid #d1d5db;
-      border-radius:12px;
-      background:#fff;
-      padding:11px 12px;
-      font-size:14px;
-      color:var(--text);
-      transition:.15s ease;
-    }
-    input:focus, select:focus{
-      outline:none;
-      border-color:#9ca3af;
-      box-shadow:0 0 0 4px rgba(17,24,39,.06);
-    }
-    .choice-grid{
-      display:grid;
-      gap:10px;
-    }
-    .mode-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-    .sub-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-    .choice{
-      display:flex;
-      align-items:flex-start;
-      gap:10px;
-      padding:12px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fff;
-    }
-    .choice span{
-      display:block;
-      font-size:14px;
-      font-weight:700;
-    }
-    .choice small{
-      display:block;
-      color:var(--muted);
-      font-size:12px;
-      margin-top:2px;
-    }
-    .flag-grid{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-    }
-    .flag-group{
-      border:1px dashed var(--line);
-      border-radius:14px;
-      padding:12px;
-      background:#fcfcfc;
-    }
-    .flag-group h4{
-      margin:0 0 10px;
-      font-size:13px;
-      font-weight:800;
-    }
+    input:focus, select:focus{outline:none;border-color:#9ca3af;box-shadow:0 0 0 4px rgba(17,24,39,.06)}
+    .choice-grid{display:grid;gap:10px}
+    .mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .sub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .choice{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+    .choice span{display:block;font-size:14px;font-weight:700}
+    .choice small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+    .flag-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .flag-group{border:1px dashed var(--line);border-radius:14px;padding:12px;background:#fcfcfc}
+    .flag-group h4{margin:0 0 10px;font-size:13px;font-weight:800}
     .flag-group.level1 h4{color:var(--red)}
     .flag-group.level2 h4{color:var(--orange)}
     .flag-group.level3 h4{color:var(--yellow)}
-    .flag-item{
-      display:flex;
-      align-items:flex-start;
-      gap:10px;
-      padding:10px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      margin-bottom:8px;
-    }
+    .flag-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px}
     .flag-item:last-child{margin-bottom:0}
-    .flag-item span{
-      display:block;
-      font-size:14px;
-      font-weight:700;
-    }
-    .flag-item small{
-      display:block;
-      color:var(--muted);
-      font-size:12px;
-      margin-top:2px;
-    }
-    .actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:4px;
-    }
-    button{
-      border:0;
-      border-radius:12px;
-      padding:11px 15px;
-      font-size:14px;
-      font-weight:800;
-      cursor:pointer;
-      transition:.15s ease;
-    }
+    .flag-item span{display:block;font-size:14px;font-weight:700}
+    .flag-item small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+    button{border:0;border-radius:12px;padding:11px 15px;font-size:14px;font-weight:800;cursor:pointer;transition:.15s ease}
     button:hover{transform:translateY(-1px)}
     .btn-primary{background:var(--accent);color:#fff}
     .btn-soft{background:#eef2f7;color:#111827}
     .btn-green{background:#ecfdf3;color:var(--green);border:1px solid #bbf7d0}
     .btn-orange{background:#fff7ed;color:var(--orange);border:1px solid #fed7aa}
-    .footer-help{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:12px;
-    }
-    .result-box{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
-      background:#fff;
-    }
-    .result-top{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .stat{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:14px;
-      background:#fafafa;
-    }
-    .stat .k{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .stat .v{
-      font-size:24px;
-      font-weight:900;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:14px;
-      font-weight:900;
-      min-width:104px;
-    }
+    .footer-help{color:var(--muted);font-size:12px;margin-top:12px}
+    .result-box{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff}
+    .result-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+    .stat{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafafa}
+    .stat .k{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .stat .v{font-size:24px;font-weight:900}
+    .badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;font-size:14px;font-weight:900;min-width:104px}
     .priority{background:var(--green-bg);color:var(--green)}
     .test{background:var(--orange-bg);color:var(--orange)}
     .skip{background:var(--red-bg);color:var(--red)}
-    .note-box{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:14px;
-      background:#fafafa;
-      margin-bottom:10px;
-    }
-    .note-box .title{
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-    .note-box .text{
-      font-size:14px;
-      color:#374151;
-      font-weight:700;
-    }
-    .history-list{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .history-item{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      background:#fff;
-    }
-    .history-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:8px;
-    }
-    .history-title{
-      font-size:15px;
-      font-weight:800;
-      margin:0;
-    }
-    .history-meta{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:2px;
-    }
-    .history-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .mini{
-      padding:8px 10px;
-      font-size:12px;
-      border-radius:10px;
-    }
-    .empty{
-      color:var(--muted);
-      font-size:14px;
-      padding:6px 2px;
-    }
-    @media (max-width:1000px){
-      .layout{grid-template-columns:1fr}
-      .flag-grid{grid-template-columns:1fr}
-    }
-    @media (max-width:680px){
-      .grid,.result-top,.mode-grid,.sub-grid{grid-template-columns:1fr}
-      .wrap{margin-top:18px}
-      .page-title h1{font-size:24px}
-    }
+    .note-box{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fafafa;margin-bottom:10px}
+    .note-box .title{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .note-box .text{font-size:14px;color:#374151;font-weight:700}
+    .history-list{display:flex;flex-direction:column;gap:10px}
+    .history-item{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+    .history-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+    .history-title{font-size:15px;font-weight:800;margin:0}
+    .history-meta{color:var(--muted);font-size:12px;margin-top:2px}
+    .history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .mini{padding:8px 10px;font-size:12px;border-radius:10px}
+    .empty{color:var(--muted);font-size:14px;padding:6px 2px}
+    @media (max-width:1000px){.layout{grid-template-columns:1fr}.flag-grid{grid-template-columns:1fr}}
+    @media (max-width:680px){.grid,.result-top,.mode-grid,.sub-grid{grid-template-columns:1fr}.wrap{margin-top:18px}.page-title h1{font-size:24px}}
   </style>
 </head>
 <body>
@@ -349,11 +99,11 @@
             <h3>1️⃣ 基本資料</h3>
             <div class="grid">
               <div class="field">
-                <label for="accountName">帳號名稱</label>
+                <label for="accountName">帳號名稱 <span class="meta-label">儲存時必填</span></label>
                 <input id="accountName" type="text" placeholder="例如：yating_cuisineee" />
               </div>
               <div class="field">
-                <label for="followers">粉絲數</label>
+                <label for="followers">粉絲數 <span class="meta-label">選填</span></label>
                 <input id="followers" type="number" min="0" placeholder="例如：2022" />
               </div>
             </div>
@@ -363,11 +113,11 @@
             <h3>2️⃣ 基本觀察</h3>
             <div class="grid">
               <div class="field">
-                <label for="contentType">內容類型</label>
+                <label for="contentType">內容類型 <span class="meta-label">選填</span></label>
                 <input id="contentType" type="text" placeholder="例如：自炊教學／減脂食譜" />
               </div>
               <div class="field">
-                <label for="firstImpression">一句話直覺</label>
+                <label for="firstImpression">一句話直覺 <span class="meta-label">選填</span></label>
                 <input id="firstImpression" type="text" placeholder="例如：內容穩定，但個人魅力較弱" />
               </div>
             </div>
@@ -377,16 +127,17 @@
             <h3>3️⃣ 互動觀察</h3>
             <div class="grid">
               <div class="field">
-                <label for="avgLikes">平均讚數</label>
+                <label for="avgLikes">平均讚數 <span class="meta-label">選填</span></label>
                 <input id="avgLikes" type="number" min="0" placeholder="例如：80" />
               </div>
               <div class="field">
-                <label for="commentCount">留言數</label>
+                <label for="commentCount">留言數 <span class="meta-label">選填</span></label>
                 <input id="commentCount" type="number" min="0" placeholder="例如：1" />
               </div>
               <div class="field full">
-                <label for="commentQuality">留言品質</label>
+                <label for="commentQuality">留言品質 <span class="meta-label">選填</span></label>
                 <select id="commentQuality">
+                  <option value="">未填寫</option>
                   <option>幾乎無留言 / 罐頭</option>
                   <option>表面留言（好看/想吃）</option>
                   <option>有問問題</option>
@@ -412,32 +163,32 @@
             <h3>4️⃣ 評分（1～5）</h3>
             <div class="grid">
               <div class="field">
-                <label for="engagement">互動品質 Engagement</label>
+                <label for="engagement">互動品質 Engagement <span class="required">*</span></label>
                 <select id="engagement"></select>
                 <div class="hint">1-2：低互動｜3：基本互動｜4-5：高互動（有對話或社群感）</div>
               </div>
               <div class="field">
-                <label for="trust">信任度 Trust</label>
+                <label for="trust">信任度 Trust <span class="required">*</span></label>
                 <select id="trust"></select>
                 <div class="hint">1-2：信任不足｜3：普通｜4-5：有信任／可能跟單</div>
               </div>
               <div class="field">
-                <label for="conversion">導購潛力 Conversion</label>
+                <label for="conversion">導購潛力 Conversion <span class="required">*</span></label>
                 <select id="conversion"></select>
                 <div class="hint">1-2：無導購能力｜3：有人詢問｜4-5：具轉單能力</div>
               </div>
               <div class="field">
-                <label for="audience">受眾吻合 Audience</label>
+                <label for="audience">受眾吻合 Audience <span class="required">*</span></label>
                 <select id="audience"></select>
                 <div class="hint">1-2：不相關｜3：勉強｜4-5：高度吻合</div>
               </div>
               <div class="field">
-                <label for="brand">品牌適配 Brand</label>
+                <label for="brand">品牌適配 Brand <span class="required">*</span></label>
                 <select id="brand"></select>
                 <div class="hint">1-2：違和｜3：可接受｜4-5：自然／一致</div>
               </div>
               <div class="field">
-                <label for="contentScore">內容質感 Content</label>
+                <label for="contentScore">內容質感 Content <span class="required">*</span></label>
                 <select id="contentScore"></select>
                 <div class="hint">1-2：低品質｜3：普通｜4-5：有質感／有辨識度</div>
               </div>
@@ -453,14 +204,12 @@
                 <div class="flag-item"><input type="checkbox" id="flag_mlm" data-flag-level="1" data-flag-label="直銷 / 引流"><div><span>直銷 / 引流</span><small>直接排除</small></div></div>
                 <div class="flag-item"><input type="checkbox" id="flag_badrep" data-flag-level="1" data-flag-label="負面口碑"><div><span>負面口碑</span><small>直接排除</small></div></div>
               </div>
-
               <div class="flag-group level2">
                 <h4>🟠 Level2（壓 Trust）</h4>
                 <div class="flag-item"><input type="checkbox" id="flag_noreply" data-flag-level="2" data-flag-label="不回留言"><div><span>不回留言</span><small>Trust 上限壓到 2</small></div></div>
                 <div class="flag-item"><input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="無篩選推薦"><div><span>無篩選推薦</span><small>Trust 上限壓到 2</small></div></div>
                 <div class="flag-item"><input type="checkbox" id="flag_contentfarm" data-flag-level="2" data-flag-label="內容農場"><div><span>內容農場</span><small>Trust 上限壓到 2</small></div></div>
               </div>
-
               <div class="flag-group level3">
                 <h4>🟡 Level3（降級）</h4>
                 <div class="flag-item"><input type="checkbox" id="flag_smallfans" data-flag-level="3" data-flag-label="粉絲少"><div><span>粉絲少</span><small>最終 Score -0.5</small></div></div>
@@ -492,7 +241,7 @@
               <button class="btn-soft" id="resetBtn">清空表單</button>
               <button class="btn-orange" id="exportBtn">匯出 CSV</button>
             </div>
-            <div class="footer-help">資料會儲存在你的瀏覽器 localStorage，不會重新整理頁面。</div>
+            <div class="footer-help">開始評估可直接試算；儲存資料時才需要填寫帳號名稱。</div>
           </div>
 
         </div>
@@ -504,50 +253,27 @@
           <div class="card-body">
             <div class="result-box">
               <div class="result-top">
-                <div class="stat">
-                  <div class="k">Score</div>
-                  <div class="v" id="resultScore">-</div>
-                </div>
-                <div class="stat">
-                  <div class="k">結果分類</div>
-                  <div id="resultCategory" class="badge">-</div>
-                </div>
-                <div class="stat">
-                  <div class="k">模式</div>
-                  <div class="v" id="resultMode" style="font-size:20px;">-</div>
-                </div>
+                <div class="stat"><div class="k">Score</div><div class="v" id="resultScore">-</div></div>
+                <div class="stat"><div class="k">結果分類</div><div id="resultCategory" class="badge">-</div></div>
+                <div class="stat"><div class="k">模式</div><div class="v" id="resultMode" style="font-size:20px;">-</div></div>
               </div>
-
-              <div class="note-box">
-                <div class="title">判斷</div>
-                <div class="text" id="resultReason">尚未評估。</div>
-              </div>
-
-              <div class="note-box">
-                <div class="title">互動率校正狀態</div>
-                <div class="text" id="engagementNote">尚未計算。</div>
-              </div>
-
-              <div class="note-box">
-                <div class="title">最終 Engagement</div>
-                <div class="text" id="finalEngagementText">-</div>
-              </div>
+              <div class="note-box"><div class="title">判斷</div><div class="text" id="resultReason">尚未評估。</div></div>
+              <div class="note-box"><div class="title">互動率校正狀態</div><div class="text" id="engagementNote">尚未計算。</div></div>
+              <div class="note-box"><div class="title">最終 Engagement</div><div class="text" id="finalEngagementText">-</div></div>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header"><h2>9️⃣ 歷史紀錄</h2></div>
-          <div class="card-body">
-            <div id="historyList" class="history-list"></div>
-          </div>
+          <div class="card-body"><div id="historyList" class="history-list"></div></div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'kol_evaluation_records_v3';
+    const STORAGE_KEY = 'kol_evaluation_records_v5';
     const scoreSelectIds = ['engagement','trust','conversion','audience','brand','contentScore'];
 
     function initScoreSelects() {
@@ -565,8 +291,9 @@
     }
 
     function safeNumber(value) {
+      if (value === '' || value === null || value === undefined) return null;
       const n = Number(value);
-      return Number.isFinite(n) ? n : 0;
+      return Number.isFinite(n) ? n : null;
     }
 
     function getSelectedMode() {
@@ -592,12 +319,12 @@
         commentQuality: document.getElementById('commentQuality').value,
         likesHidden: document.getElementById('likesHidden').checked,
         commentsHidden: document.getElementById('commentsHidden').checked,
-        engagement: safeNumber(document.getElementById('engagement').value),
-        trust: safeNumber(document.getElementById('trust').value),
-        conversion: safeNumber(document.getElementById('conversion').value),
-        audience: safeNumber(document.getElementById('audience').value),
-        brand: safeNumber(document.getElementById('brand').value),
-        content: safeNumber(document.getElementById('contentScore').value),
+        engagement: Number(document.getElementById('engagement').value),
+        trust: Number(document.getElementById('trust').value),
+        conversion: Number(document.getElementById('conversion').value),
+        audience: Number(document.getElementById('audience').value),
+        brand: Number(document.getElementById('brand').value),
+        content: Number(document.getElementById('contentScore').value),
         mode: getSelectedMode(),
         flags: getFlags()
       };
@@ -649,15 +376,20 @@
       }
 
       let finalTrust = data.trust;
-      if (level2) {
-        finalTrust = Math.min(finalTrust, 2);
-      }
+      if (level2) finalTrust = Math.min(finalTrust, 2);
 
-      const metricsComplete = !data.likesHidden && !data.commentsHidden && data.followers > 0;
+      const metricsComplete =
+        !data.likesHidden &&
+        !data.commentsHidden &&
+        data.followers !== null &&
+        data.avgLikes !== null &&
+        data.commentCount !== null &&
+        data.followers > 0;
+
       let finalEngagement = data.engagement;
       let engagementRate = null;
       let engagementRatePercent = '';
-      let engagementNote = '公開互動數據不足，未納入數值校正';
+      let engagementNote = '未提供完整公開互動數據，未納入校正';
 
       if (metricsComplete) {
         engagementRate = (data.avgLikes + data.commentCount) / data.followers;
@@ -669,25 +401,14 @@
 
       let score = 0;
       if (data.mode === '賣貨') {
-        score =
-          finalTrust * 0.3 +
-          data.conversion * 0.25 +
-          finalEngagement * 0.2 +
-          data.audience * 0.15 +
-          data.content * 0.1;
+        score = finalTrust * 0.3 + data.conversion * 0.25 + finalEngagement * 0.2 + data.audience * 0.15 + data.content * 0.1;
       } else {
-        score =
-          data.brand * 0.3 +
-          data.content * 0.25 +
-          finalTrust * 0.2 +
-          finalEngagement * 0.15 +
-          data.audience * 0.1;
+        score = data.brand * 0.3 + data.content * 0.25 + finalTrust * 0.2 + finalEngagement * 0.15 + data.audience * 0.1;
       }
 
       if (level3) score -= 0.5;
       score = Math.max(0, score);
 
-      const result = classifyScore(score);
       const evaluated = {
         ...data,
         finalTrust,
@@ -696,7 +417,7 @@
         engagementRatePercent,
         engagementNote,
         score: Number(score.toFixed(1)),
-        result,
+        result: classifyScore(score),
         isForcedSkip: false
       };
       evaluated.reason = generateReason(evaluated, finalTrust, score, false);
@@ -722,11 +443,8 @@
     }
 
     function getRecords() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch (e) {
-        return [];
-      }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch (e) { return []; }
     }
 
     function setRecords(records) {
@@ -743,7 +461,7 @@
     }
 
     function formatNumber(n) {
-      if (!n && n !== 0) return '-';
+      if (n === null || n === undefined || n === '') return '-';
       return Number(n).toLocaleString('zh-TW');
     }
 
@@ -783,10 +501,9 @@
       document.getElementById('firstImpression').value = record.firstImpression || '';
       document.getElementById('avgLikes').value = record.avgLikes ?? '';
       document.getElementById('commentCount').value = record.commentCount ?? '';
-      document.getElementById('commentQuality').value = record.commentQuality || '幾乎無留言 / 罐頭';
+      document.getElementById('commentQuality').value = record.commentQuality || '';
       document.getElementById('likesHidden').checked = !!record.likesHidden;
       document.getElementById('commentsHidden').checked = !!record.commentsHidden;
-
       document.getElementById('engagement').value = record.engagement ?? 3;
       document.getElementById('trust').value = record.trust ?? 3;
       document.getElementById('conversion').value = record.conversion ?? 3;
@@ -794,14 +511,11 @@
       document.getElementById('brand').value = record.brand ?? 3;
       document.getElementById('contentScore').value = record.content ?? 3;
 
-      document.querySelectorAll('input[name="mode"]').forEach(radio => {
-        radio.checked = radio.value === record.mode;
+      document.querySelectorAll('input[name="mode"]').forEach(r => {
+        r.checked = r.value === record.mode;
       });
 
-      document.querySelectorAll('input[type="checkbox"][data-flag-level]').forEach(chk => {
-        chk.checked = false;
-      });
-
+      document.querySelectorAll('input[type="checkbox"][data-flag-level]').forEach(chk => chk.checked = false);
       (record.flags || []).forEach(flag => {
         const target = document.getElementById(flag.id);
         if (target) target.checked = true;
@@ -813,15 +527,13 @@
     window.loadRecord = function(encodedName) {
       const name = decodeURIComponent(encodedName);
       const record = getRecords().find(item => item.accountName === name);
-      if (!record) return;
-      fillForm(record);
+      if (record) fillForm(record);
     }
 
     window.deleteRecord = function(encodedName) {
       const name = decodeURIComponent(encodedName);
       if (!confirm(`確定要刪除「${name}」這筆紀錄嗎？`)) return;
-      const next = getRecords().filter(item => item.accountName !== name);
-      setRecords(next);
+      setRecords(getRecords().filter(item => item.accountName !== name));
       renderHistory();
     }
 
@@ -832,7 +544,7 @@
       document.getElementById('firstImpression').value = '';
       document.getElementById('avgLikes').value = '';
       document.getElementById('commentCount').value = '';
-      document.getElementById('commentQuality').value = '幾乎無留言 / 罐頭';
+      document.getElementById('commentQuality').value = '';
       document.getElementById('likesHidden').checked = false;
       document.getElementById('commentsHidden').checked = false;
 
@@ -853,7 +565,7 @@
     function saveCurrentRecord() {
       const data = collectFormData();
       if (!data.accountName) {
-        alert('請先填寫帳號名稱。');
+        alert('儲存資料前請先填寫帳號名稱。');
         return;
       }
 
@@ -868,11 +580,7 @@
         if (!shouldOverwrite) return;
       }
 
-      const record = {
-        ...evaluated,
-        scoreDisplay: evaluated.isForcedSkip ? '-' : evaluated.score.toFixed(1)
-      };
-
+      const record = { ...evaluated, scoreDisplay: evaluated.isForcedSkip ? '-' : evaluated.score.toFixed(1) };
       if (existsIndex !== -1) records[existsIndex] = record;
       else records.unshift(record);
 
@@ -889,10 +597,8 @@
       }
 
       const headers = [
-        '帳號名稱','粉絲數','內容類型','一句話直覺','平均讚數','留言數','留言品質',
-        '讚數不可見','留言數不可見',
-        'Engagement','Trust','Conversion','Audience','Brand','Content',
-        '模式','finalEngagement','互動率','Score','結果','紅旗'
+        '帳號名稱','粉絲數','內容類型','一句話直覺','平均讚數','留言數','留言品質','讚數不可見','留言數不可見',
+        'Engagement','Trust','Conversion','Audience','Brand','Content','模式','finalEngagement','互動率','Score','結果','紅旗'
       ];
 
       const rows = records.map(r => [
@@ -937,7 +643,6 @@
     document.getElementById('evaluateBtn').addEventListener('click', () => {
       renderResult(evaluate());
     });
-
     document.getElementById('saveBtn').addEventListener('click', saveCurrentRecord);
     document.getElementById('resetBtn').addEventListener('click', resetForm);
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
