@@ -583,7 +583,7 @@
               <div class="flag-group level2">
                 <h4>🟠 Level2（壓 Trust）</h4>
                 <div class="flag-item"><input type="checkbox" id="flag_noreply" data-flag-level="2" data-flag-label="不回留言"><div><span>不回留言</span><small>Trust 上限壓到 2</small></div></div>
-                <div class="flag-item"><input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="無篩選推薦"><div><span>無篩選推薦</span><small>Trust 上限壓到 2</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="沒有篩選過推薦或曝光的產品"><div><span>會降低推薦可信度</span><small>Trust 上限壓到 2</small></div></div>
                 <div class="flag-item"><input type="checkbox" id="flag_contentfarm" data-flag-level="2" data-flag-label="內容農場"><div><span>內容農場</span><small>Trust 上限壓到 2</small></div></div>
               </div>
 
@@ -821,82 +821,103 @@
       return '整體偏弱，暫不建議投入';
     }
 
-    function getSuggestedCooperation(data) {
-      if (data.isForcedSkip) {
-        return {
-          resourceDecision: '不值得投入正式合作資源',
-          cooperation: '不合作',
-          cooperationType: 'none'
-        };
-      }
+function getSuggestedCooperation(data) {
 
-      if (data.score < 3.5) {
-        return {
-          resourceDecision: '不值得投入正式合作資源',
-          cooperation: '不合作',
-          cooperationType: 'none'
-        };
-      }
+  const isProfessional = (data.contentTypes || []).includes('醫學/營養類專業人士');
 
-      const highValuePRCondition =
-        data.score >= 4.0 &&
-        (
-          data.brand <= 2 ||
-          data.audience <= 2
-        );
+  if (data.isForcedSkip) {
+    return {
+      resourceDecision: '不投入',
+      cooperation: '不合作',
+      cooperationType: 'none'
+    };
+  }
 
-      if (highValuePRCondition) {
-        return {
-          resourceDecision: '暫不建議投入正式合作資源，但可列入高價值觀察名單',
-          cooperation: '公關品',
-          cooperationType: 'pr'
-        };
-      }
+  // 低分 → 不做
+  if (data.score < 3.5) {
+    return {
+      resourceDecision: '不投入',
+      cooperation: '不合作',
+      cooperationType: 'none'
+    };
+  }
 
-      if (data.trustForSuggestion >= 4 && data.brand >= 4 && data.score >= 4.2) {
-        return {
-          resourceDecision: '值得投入正式合作資源',
-          cooperation: '付費募資頁',
-          cooperationType: 'crowd'
-        };
-      }
+  // 高價值但不匹配 → 公關品
+  if (
+    data.score >= 4.0 &&
+    (data.brand <= 2 || data.audience <= 2)
+  ) {
+    return {
+      resourceDecision: '暫不投入（觀察名單）',
+      cooperation: '公關品',
+      cooperationType: 'pr'
+    };
+  }
 
-      if (data.score >= 4.2) {
-        if (data.conversion >= 4) {
-          return {
-            resourceDecision: '值得投入正式合作資源',
-            cooperation: '付費曝光',
-            cooperationType: 'paid'
-          };
-        }
-        return {
-          resourceDecision: '值得投入正式合作資源',
-          cooperation: '互惠曝光',
-          cooperationType: 'barter'
-        };
-      }
+  // ⭐⭐⭐ 核心修改在這裡 ⭐⭐⭐
+  // 募資頁判斷（專業人士放寬條件）
 
-      if (data.score >= 3.5) {
-        if (data.conversion >= 3) {
-          return {
-            resourceDecision: '可小量投入正式合作資源測試',
-            cooperation: '互惠曝光',
-            cooperationType: 'barter'
-          };
-        }
-        return {
-          resourceDecision: '暫不建議投入正式合作資源，但可列入高價值觀察名單',
-          cooperation: '公關品',
-          cooperationType: 'pr'
-        };
-      }
+  if (
+    (
+      // 一般條件
+      data.trustForSuggestion >= 4 &&
+      data.brand >= 4 &&
+      data.score >= 4.2
+    )
+    ||
+    (
+      // 專業人士條件（放寬）
+      isProfessional &&
+      data.trustForSuggestion >= 4 &&
+      data.brand >= 3 &&
+      data.score >= 4.0
+    )
+  ) {
+    return {
+      resourceDecision: '投入',
+      cooperation: '付費募資頁',
+      cooperationType: 'crowd'
+    };
+  }
 
+  // 高分 → 付費曝光
+  if (data.score >= 4.2) {
+    if (data.conversion >= 4) {
       return {
-        resourceDecision: '不值得投入正式合作資源',
-        cooperation: '不合作',
-        cooperationType: 'none'
+        resourceDecision: '投入',
+        cooperation: '付費曝光',
+        cooperationType: 'paid'
       };
     }
+    return {
+      resourceDecision: '投入',
+      cooperation: '互惠曝光',
+      cooperationType: 'barter'
+    };
+  }
+
+  // 中分
+  if (data.score >= 3.5) {
+    if (data.conversion >= 3) {
+      return {
+        resourceDecision: '小量投入測試',
+        cooperation: '互惠曝光',
+        cooperationType: 'barter'
+      };
+    }
+    return {
+      resourceDecision: '觀察',
+      cooperation: '公關品',
+      cooperationType: 'pr'
+    };
+  }
+
+  return {
+    resourceDecision: '不投入',
+    cooperation: '不合作',
+    cooperationType: 'none'
+  };
+}
 
     function evaluate(data = collectFormData()) {
       const level1 = data.flags.some(f => f.level === 1);
