@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KOL 評估工具</title>
+  <style>
+    :root{
+      --bg:#f7f7f5;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --soft:#f9fafb;
+      --shadow:0 8px 24px rgba(15,23,42,.06);
+      --green:#15803d;
+      --green-bg:#dcfce7;
+      --orange:#c2410c;
+      --orange-bg:#ffedd5;
+      --red:#b91c1c;
+      --red-bg:#fee2e2;
+      --yellow:#a16207;
+      --yellow-bg:#fef3c7;
+      --accent:#111827;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+      line-height:1.5;
+    }
+    .wrap{
+      max-width:1240px;
+      margin:28px auto 48px;
+      padding:0 18px;
+    }
+    .page-title{
+      margin-bottom:18px;
+    }
+    .page-title h1{
+      margin:0 0 6px;
+      font-size:28px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .page-title p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);
+      gap:18px;
+      align-items:start;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card-header{
+      padding:18px 20px;
+      border-bottom:1px solid var(--line);
+      background:#fff;
+    }
+    .card-header h2{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+    }
+    .card-body{
+      padding:18px 20px 20px;
+    }
+    .section{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      margin-bottom:16px;
+      background:#fff;
+    }
+    .section:last-child{margin-bottom:0}
+    .section h3{
+      margin:0 0 14px;
+      font-size:16px;
+      font-weight:800;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px 16px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .field.full{grid-column:1 / -1}
+    label{
+      font-size:13px;
+      font-weight:700;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+    }
+    input[type="text"],
+    input[type="number"],
+    select{
+      width:100%;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      background:#fff;
+      padding:11px 12px;
+      font-size:14px;
+      color:var(--text);
+      transition:.15s ease;
+    }
+    input:focus, select:focus{
+      outline:none;
+      border-color:#9ca3af;
+      box-shadow:0 0 0 4px rgba(17,24,39,.06);
+    }
+    .choice-grid{
+      display:grid;
+      gap:10px;
+    }
+    .mode-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .sub-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .choice{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+    }
+    .choice span{
+      display:block;
+      font-size:14px;
+      font-weight:700;
+    }
+    .choice small{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .flag-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+    .flag-group{
+      border:1px dashed var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:#fcfcfc;
+    }
+    .flag-group h4{
+      margin:0 0 10px;
+      font-size:13px;
+      font-weight:800;
+    }
+    .flag-group.level1 h4{color:var(--red)}
+    .flag-group.level2 h4{color:var(--orange)}
+    .flag-group.level3 h4{color:var(--yellow)}
+    .flag-item{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      margin-bottom:8px;
+    }
+    .flag-item:last-child{margin-bottom:0}
+    .flag-item span{
+      display:block;
+      font-size:14px;
+      font-weight:700;
+    }
+    .flag-item small{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:4px;
+    }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:11px 15px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-soft{background:#eef2f7;color:#111827}
+    .btn-green{background:#ecfdf3;color:var(--green);border:1px solid #bbf7d0}
+    .btn-orange{background:#fff7ed;color:var(--orange);border:1px solid #fed7aa}
+    .footer-help{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:12px;
+    }
+    .result-box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      background:#fff;
+    }
+    .result-top{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .stat{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:#fafafa;
+    }
+    .stat .k{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .stat .v{
+      font-size:24px;
+      font-weight:900;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:900;
+      min-width:104px;
+    }
+    .priority{background:var(--green-bg);color:var(--green)}
+    .test{background:var(--orange-bg);color:var(--orange)}
+    .skip{background:var(--red-bg);color:var(--red)}
+    .note-box{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:#fafafa;
+      margin-bottom:10px;
+    }
+    .note-box .title{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .note-box .text{
+      font-size:14px;
+      color:#374151;
+      font-weight:700;
+    }
+    .history-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .history-item{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:#fff;
+    }
+    .history-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:8px;
+    }
+    .history-title{
+      font-size:15px;
+      font-weight:800;
+      margin:0;
+    }
+    .history-meta{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .history-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .mini{
+      padding:8px 10px;
+      font-size:12px;
+      border-radius:10px;
+    }
+    .empty{
+      color:var(--muted);
+      font-size:14px;
+      padding:6px 2px;
+    }
+    @media (max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      .flag-grid{grid-template-columns:1fr}
+    }
+    @media (max-width:680px){
+      .grid,.result-top,.mode-grid,.sub-grid{grid-template-columns:1fr}
+      .wrap{margin-top:18px}
+      .page-title h1{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="page-title">
+      <h1>KOL 評估工具</h1>
+      <p>內部快速評估用，人工判斷為主，數據輔助校正。</p>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-header"><h2>評估表單</h2></div>
+        <div class="card-body">
+
+          <div class="section">
+            <h3>1️⃣ 基本資料</h3>
+            <div class="grid">
+              <div class="field">
+                <label for="accountName">帳號名稱</label>
+                <input id="accountName" type="text" placeholder="例如：yating_cuisineee" />
+              </div>
+              <div class="field">
+                <label for="followers">粉絲數</label>
+                <input id="followers" type="number" min="0" placeholder="例如：2022" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>2️⃣ 基本觀察</h3>
+            <div class="grid">
+              <div class="field">
+                <label for="contentType">內容類型</label>
+                <input id="contentType" type="text" placeholder="例如：自炊教學／減脂食譜" />
+              </div>
+              <div class="field">
+                <label for="firstImpression">一句話直覺</label>
+                <input id="firstImpression" type="text" placeholder="例如：內容穩定，但個人魅力較弱" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>3️⃣ 互動觀察</h3>
+            <div class="grid">
+              <div class="field">
+                <label for="avgLikes">平均讚數</label>
+                <input id="avgLikes" type="number" min="0" placeholder="例如：80" />
+              </div>
+              <div class="field">
+                <label for="commentCount">留言數</label>
+                <input id="commentCount" type="number" min="0" placeholder="例如：1" />
+              </div>
+              <div class="field full">
+                <label for="commentQuality">留言品質</label>
+                <select id="commentQuality">
+                  <option>幾乎無留言 / 罐頭</option>
+                  <option>表面留言（好看/想吃）</option>
+                  <option>有問問題</option>
+                  <option>有來回互動</option>
+                  <option>社群感（聊天/tag）</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="choice-grid sub-grid" style="margin-top:14px;">
+              <label class="choice">
+                <input type="checkbox" id="likesHidden" />
+                <div><span>讚數不可見</span><small>不視為低分，只代表資料不足</small></div>
+              </label>
+              <label class="choice">
+                <input type="checkbox" id="commentsHidden" />
+                <div><span>留言數不可見</span><small>不視為低分，只代表資料不足</small></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>4️⃣ 評分（1～5）</h3>
+            <div class="grid">
+              <div class="field">
+                <label for="engagement">互動品質 Engagement</label>
+                <select id="engagement"></select>
+                <div class="hint">1-2：低互動｜3：基本互動｜4-5：高互動（有對話或社群感）</div>
+              </div>
+              <div class="field">
+                <label for="trust">信任度 Trust</label>
+                <select id="trust"></select>
+                <div class="hint">1-2：信任不足｜3：普通｜4-5：有信任／可能跟單</div>
+              </div>
+              <div class="field">
+                <label for="conversion">導購潛力 Conversion</label>
+                <select id="conversion"></select>
+                <div class="hint">1-2：無導購能力｜3：有人詢問｜4-5：具轉單能力</div>
+              </div>
+              <div class="field">
+                <label for="audience">受眾吻合 Audience</label>
+                <select id="audience"></select>
+                <div class="hint">1-2：不相關｜3：勉強｜4-5：高度吻合</div>
+              </div>
+              <div class="field">
+                <label for="brand">品牌適配 Brand</label>
+                <select id="brand"></select>
+                <div class="hint">1-2：違和｜3：可接受｜4-5：自然／一致</div>
+              </div>
+              <div class="field">
+                <label for="contentScore">內容質感 Content</label>
+                <select id="contentScore"></select>
+                <div class="hint">1-2：低品質｜3：普通｜4-5：有質感／有辨識度</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>5️⃣ 紅旗</h3>
+            <div class="flag-grid">
+              <div class="flag-group level1">
+                <h4>🔴 Level1（直接淘汰）</h4>
+                <div class="flag-item"><input type="checkbox" id="flag_ai" data-flag-level="1" data-flag-label="AI內容"><div><span>AI內容</span><small>直接排除</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_mlm" data-flag-level="1" data-flag-label="直銷 / 引流"><div><span>直銷 / 引流</span><small>直接排除</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_badrep" data-flag-level="1" data-flag-label="負面口碑"><div><span>負面口碑</span><small>直接排除</small></div></div>
+              </div>
+
+              <div class="flag-group level2">
+                <h4>🟠 Level2（壓 Trust）</h4>
+                <div class="flag-item"><input type="checkbox" id="flag_noreply" data-flag-level="2" data-flag-label="不回留言"><div><span>不回留言</span><small>Trust 上限壓到 2</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="無篩選推薦"><div><span>無篩選推薦</span><small>Trust 上限壓到 2</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_contentfarm" data-flag-level="2" data-flag-label="內容農場"><div><span>內容農場</span><small>Trust 上限壓到 2</small></div></div>
+              </div>
+
+              <div class="flag-group level3">
+                <h4>🟡 Level3（降級）</h4>
+                <div class="flag-item"><input type="checkbox" id="flag_smallfans" data-flag-level="3" data-flag-label="粉絲少"><div><span>粉絲少</span><small>最終 Score -0.5</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_unclear" data-flag-level="3" data-flag-label="定位不明"><div><span>定位不明</span><small>最終 Score -0.5</small></div></div>
+                <div class="flag-item"><input type="checkbox" id="flag_early" data-flag-level="3" data-flag-label="成長初期"><div><span>成長初期</span><small>最終 Score -0.5</small></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>6️⃣ 模式選擇</h3>
+            <div class="choice-grid mode-grid">
+              <label class="choice">
+                <input type="radio" name="mode" value="賣貨" checked />
+                <div><span>賣貨</span><small>Trust / Conversion 權重較高</small></div>
+              </label>
+              <label class="choice">
+                <input type="radio" name="mode" value="品牌" />
+                <div><span>品牌</span><small>Brand / Content 權重較高</small></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>7️⃣ 操作</h3>
+            <div class="actions">
+              <button class="btn-primary" id="evaluateBtn">開始評估</button>
+              <button class="btn-green" id="saveBtn">儲存這筆資料</button>
+              <button class="btn-soft" id="resetBtn">清空表單</button>
+              <button class="btn-orange" id="exportBtn">匯出 CSV</button>
+            </div>
+            <div class="footer-help">資料會儲存在你的瀏覽器 localStorage，不會重新整理頁面。</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:grid; gap:18px;">
+        <div class="card">
+          <div class="card-header"><h2>8️⃣ 結果顯示</h2></div>
+          <div class="card-body">
+            <div class="result-box">
+              <div class="result-top">
+                <div class="stat">
+                  <div class="k">Score</div>
+                  <div class="v" id="resultScore">-</div>
+                </div>
+                <div class="stat">
+                  <div class="k">結果分類</div>
+                  <div id="resultCategory" class="badge">-</div>
+                </div>
+                <div class="stat">
+                  <div class="k">模式</div>
+                  <div class="v" id="resultMode" style="font-size:20px;">-</div>
+                </div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">判斷</div>
+                <div class="text" id="resultReason">尚未評估。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">互動率校正狀態</div>
+                <div class="text" id="engagementNote">尚未計算。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">最終 Engagement</div>
+                <div class="text" id="finalEngagementText">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2>9️⃣ 歷史紀錄</h2></div>
+          <div class="card-body">
+            <div id="historyList" class="history-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'kol_evaluation_records_v3';
+    const scoreSelectIds = ['engagement','trust','conversion','audience','brand','contentScore'];
+
+    function initScoreSelects() {
+      scoreSelectIds.forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+          const option = document.createElement('option');
+          option.value = i;
+          option.textContent = i;
+          if (i === 3) option.selected = true;
+          el.appendChild(option);
+        }
+      });
+    }
+
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function getSelectedMode() {
+      return document.querySelector('input[name="mode"]:checked')?.value || '賣貨';
+    }
+
+    function getFlags() {
+      return [...document.querySelectorAll('input[type="checkbox"][data-flag-level]:checked')].map(el => ({
+        id: el.id,
+        level: Number(el.dataset.flagLevel),
+        label: el.dataset.flagLabel
+      }));
+    }
+
+    function collectFormData() {
+      return {
+        accountName: document.getElementById('accountName').value.trim(),
+        followers: safeNumber(document.getElementById('followers').value),
+        contentType: document.getElementById('contentType').value.trim(),
+        firstImpression: document.getElementById('firstImpression').value.trim(),
+        avgLikes: safeNumber(document.getElementById('avgLikes').value),
+        commentCount: safeNumber(document.getElementById('commentCount').value),
+        commentQuality: document.getElementById('commentQuality').value,
+        likesHidden: document.getElementById('likesHidden').checked,
+        commentsHidden: document.getElementById('commentsHidden').checked,
+        engagement: safeNumber(document.getElementById('engagement').value),
+        trust: safeNumber(document.getElementById('trust').value),
+        conversion: safeNumber(document.getElementById('conversion').value),
+        audience: safeNumber(document.getElementById('audience').value),
+        brand: safeNumber(document.getElementById('brand').value),
+        content: safeNumber(document.getElementById('contentScore').value),
+        mode: getSelectedMode(),
+        flags: getFlags()
+      };
+    }
+
+    function getEngagementScore(rate) {
+      if (rate >= 0.10) return 5;
+      if (rate >= 0.05) return 4;
+      if (rate >= 0.02) return 3;
+      if (rate >= 0.01) return 2;
+      return 1;
+    }
+
+    function classifyScore(score) {
+      if (score >= 4.2) return 'Priority';
+      if (score >= 3.5) return 'Test';
+      return 'Skip';
+    }
+
+    function generateReason(data, finalTrust, score, isForcedSkip) {
+      if (isForcedSkip) return '高風險帳號，直接排除';
+      if (finalTrust >= 4 && data.conversion >= 4) return '高轉單潛力，適合直接導購';
+      if (data.finalEngagement >= 4 && finalTrust >= 4) return '高互動＋高信任，適合經營型合作';
+      if (finalTrust <= 2) return '信任不足，轉單風險高';
+      if (score >= 4) return '整體表現穩定，可優先測試';
+      if (score >= 3.5) return '中性帳號，建議小量測試';
+      return '整體偏弱，暫不建議投入';
+    }
+
+    function evaluate(data = collectFormData()) {
+      const level1 = data.flags.some(f => f.level === 1);
+      const level2 = data.flags.some(f => f.level === 2);
+      const level3 = data.flags.some(f => f.level === 3);
+
+      if (level1) {
+        const forced = {
+          ...data,
+          finalTrust: data.trust,
+          finalEngagement: data.engagement,
+          engagementRate: null,
+          engagementRatePercent: '',
+          engagementNote: '未計算，因 Level1 紅旗直接淘汰',
+          score: 0,
+          result: 'Skip',
+          isForcedSkip: true
+        };
+        forced.reason = generateReason(forced, forced.finalTrust, forced.score, true);
+        return forced;
+      }
+
+      let finalTrust = data.trust;
+      if (level2) {
+        finalTrust = Math.min(finalTrust, 2);
+      }
+
+      const metricsComplete = !data.likesHidden && !data.commentsHidden && data.followers > 0;
+      let finalEngagement = data.engagement;
+      let engagementRate = null;
+      let engagementRatePercent = '';
+      let engagementNote = '公開互動數據不足，未納入數值校正';
+
+      if (metricsComplete) {
+        engagementRate = (data.avgLikes + data.commentCount) / data.followers;
+        const autoEngagement = getEngagementScore(engagementRate);
+        finalEngagement = Math.min(data.engagement, autoEngagement);
+        engagementRatePercent = (engagementRate * 100).toFixed(1) + '%';
+        engagementNote = `已套用互動率校正（${engagementRatePercent}）`;
+      }
+
+      let score = 0;
+      if (data.mode === '賣貨') {
+        score =
+          finalTrust * 0.3 +
+          data.conversion * 0.25 +
+          finalEngagement * 0.2 +
+          data.audience * 0.15 +
+          data.content * 0.1;
+      } else {
+        score =
+          data.brand * 0.3 +
+          data.content * 0.25 +
+          finalTrust * 0.2 +
+          finalEngagement * 0.15 +
+          data.audience * 0.1;
+      }
+
+      if (level3) score -= 0.5;
+      score = Math.max(0, score);
+
+      const result = classifyScore(score);
+      const evaluated = {
+        ...data,
+        finalTrust,
+        finalEngagement,
+        engagementRate,
+        engagementRatePercent,
+        engagementNote,
+        score: Number(score.toFixed(1)),
+        result,
+        isForcedSkip: false
+      };
+      evaluated.reason = generateReason(evaluated, finalTrust, score, false);
+      return evaluated;
+    }
+
+    function setResultBadge(text) {
+      const el = document.getElementById('resultCategory');
+      el.textContent = text;
+      el.className = 'badge';
+      if (text === 'Priority') el.classList.add('priority');
+      else if (text === 'Test') el.classList.add('test');
+      else if (text === 'Skip') el.classList.add('skip');
+    }
+
+    function renderResult(evaluated) {
+      document.getElementById('resultScore').textContent = evaluated.isForcedSkip ? '-' : evaluated.score.toFixed(1);
+      document.getElementById('resultMode').textContent = evaluated.mode || '-';
+      setResultBadge(evaluated.result);
+      document.getElementById('resultReason').textContent = `${evaluated.result}｜${evaluated.reason}`;
+      document.getElementById('engagementNote').textContent = evaluated.engagementNote || '-';
+      document.getElementById('finalEngagementText').textContent = evaluated.finalEngagement ?? '-';
+    }
+
+    function getRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function setRecords(records) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function formatNumber(n) {
+      if (!n && n !== 0) return '-';
+      return Number(n).toLocaleString('zh-TW');
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      const records = getRecords();
+
+      if (!records.length) {
+        list.innerHTML = '<div class="empty">目前沒有儲存紀錄。</div>';
+        return;
+      }
+
+      list.innerHTML = records.map(record => {
+        const cls = record.result === 'Priority' ? 'priority' : record.result === 'Test' ? 'test' : 'skip';
+        return `
+          <div class="history-item">
+            <div class="history-head">
+              <div>
+                <div class="history-title">${escapeHtml(record.accountName || '未命名帳號')}</div>
+                <div class="history-meta">粉絲數：${formatNumber(record.followers)}｜模式：${record.mode}｜Score：${record.scoreDisplay}</div>
+              </div>
+              <div class="badge ${cls}">${record.result}</div>
+            </div>
+            <div class="history-actions">
+              <button class="btn-soft mini" onclick="loadRecord('${encodeURIComponent(record.accountName)}')">載入</button>
+              <button class="btn-soft mini" onclick="deleteRecord('${encodeURIComponent(record.accountName)}')">刪除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function fillForm(record) {
+      document.getElementById('accountName').value = record.accountName || '';
+      document.getElementById('followers').value = record.followers ?? '';
+      document.getElementById('contentType').value = record.contentType || '';
+      document.getElementById('firstImpression').value = record.firstImpression || '';
+      document.getElementById('avgLikes').value = record.avgLikes ?? '';
+      document.getElementById('commentCount').value = record.commentCount ?? '';
+      document.getElementById('commentQuality').value = record.commentQuality || '幾乎無留言 / 罐頭';
+      document.getElementById('likesHidden').checked = !!record.likesHidden;
+      document.getElementById('commentsHidden').checked = !!record.commentsHidden;
+
+      document.getElementById('engagement').value = record.engagement ?? 3;
+      document.getElementById('trust').value = record.trust ?? 3;
+      document.getElementById('conversion').value = record.conversion ?? 3;
+      document.getElementById('audience').value = record.audience ?? 3;
+      document.getElementById('brand').value = record.brand ?? 3;
+      document.getElementById('contentScore').value = record.content ?? 3;
+
+      document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.checked = radio.value === record.mode;
+      });
+
+      document.querySelectorAll('input[type="checkbox"][data-flag-level]').forEach(chk => {
+        chk.checked = false;
+      });
+
+      (record.flags || []).forEach(flag => {
+        const target = document.getElementById(flag.id);
+        if (target) target.checked = true;
+      });
+
+      renderResult(evaluate());
+    }
+
+    window.loadRecord = function(encodedName) {
+      const name = decodeURIComponent(encodedName);
+      const record = getRecords().find(item => item.accountName === name);
+      if (!record) return;
+      fillForm(record);
+    }
+
+    window.deleteRecord = function(encodedName) {
+      const name = decodeURIComponent(encodedName);
+      if (!confirm(`確定要刪除「${name}」這筆紀錄嗎？`)) return;
+      const next = getRecords().filter(item => item.accountName !== name);
+      setRecords(next);
+      renderHistory();
+    }
+
+    function resetForm() {
+      document.getElementById('accountName').value = '';
+      document.getElementById('followers').value = '';
+      document.getElementById('contentType').value = '';
+      document.getElementById('firstImpression').value = '';
+      document.getElementById('avgLikes').value = '';
+      document.getElementById('commentCount').value = '';
+      document.getElementById('commentQuality').value = '幾乎無留言 / 罐頭';
+      document.getElementById('likesHidden').checked = false;
+      document.getElementById('commentsHidden').checked = false;
+
+      scoreSelectIds.forEach(id => document.getElementById(id).value = 3);
+      document.querySelector('input[name="mode"][value="賣貨"]').checked = true;
+      document.querySelectorAll('input[type="checkbox"][data-flag-level]').forEach(chk => chk.checked = false);
+
+      document.getElementById('resultScore').textContent = '-';
+      document.getElementById('resultMode').textContent = '-';
+      document.getElementById('resultReason').textContent = '尚未評估。';
+      document.getElementById('engagementNote').textContent = '尚未計算。';
+      document.getElementById('finalEngagementText').textContent = '-';
+      const badge = document.getElementById('resultCategory');
+      badge.textContent = '-';
+      badge.className = 'badge';
+    }
+
+    function saveCurrentRecord() {
+      const data = collectFormData();
+      if (!data.accountName) {
+        alert('請先填寫帳號名稱。');
+        return;
+      }
+
+      const evaluated = evaluate(data);
+      renderResult(evaluated);
+
+      const records = getRecords();
+      const existsIndex = records.findIndex(item => item.accountName === data.accountName);
+
+      if (existsIndex !== -1) {
+        const shouldOverwrite = confirm(`「${data.accountName}」已存在，是否覆蓋？`);
+        if (!shouldOverwrite) return;
+      }
+
+      const record = {
+        ...evaluated,
+        scoreDisplay: evaluated.isForcedSkip ? '-' : evaluated.score.toFixed(1)
+      };
+
+      if (existsIndex !== -1) records[existsIndex] = record;
+      else records.unshift(record);
+
+      setRecords(records);
+      renderHistory();
+      alert('已儲存。');
+    }
+
+    function exportCSV() {
+      const records = getRecords();
+      if (!records.length) {
+        alert('目前沒有可匯出的紀錄。');
+        return;
+      }
+
+      const headers = [
+        '帳號名稱','粉絲數','內容類型','一句話直覺','平均讚數','留言數','留言品質',
+        '讚數不可見','留言數不可見',
+        'Engagement','Trust','Conversion','Audience','Brand','Content',
+        '模式','finalEngagement','互動率','Score','結果','紅旗'
+      ];
+
+      const rows = records.map(r => [
+        r.accountName || '',
+        r.followers ?? '',
+        r.contentType || '',
+        r.firstImpression || '',
+        r.avgLikes ?? '',
+        r.commentCount ?? '',
+        r.commentQuality || '',
+        r.likesHidden ? '是' : '否',
+        r.commentsHidden ? '是' : '否',
+        r.engagement ?? '',
+        r.trust ?? '',
+        r.conversion ?? '',
+        r.audience ?? '',
+        r.brand ?? '',
+        r.content ?? '',
+        r.mode || '',
+        r.finalEngagement ?? '',
+        r.engagementRatePercent || '',
+        r.scoreDisplay ?? '',
+        r.result || '',
+        (r.flags || []).map(f => f.label).join(' / ')
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+        .join('\r\n');
+
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kol_evaluation.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('evaluateBtn').addEventListener('click', () => {
+      renderResult(evaluate());
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', saveCurrentRecord);
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+    document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+    initScoreSelects();
+    renderHistory();
+    resetForm();
+  </script>
+</body>
+</html>
