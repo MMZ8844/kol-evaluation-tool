@@ -806,12 +806,11 @@
       return 1;
     }
 
-    function classifyScore(score) {
-      if (score >= 4.2) return 'Priority';
-      if (score >= 3.5) return 'Test';
-      return 'Skip';
-    }
-
+   function classifyScore(score) {
+     if (score >= 4.2) return 'Priority';
+     if (score >= 3.5) return 'Test';
+     return 'Observe';
+   }
     function generateReason(data, finalTrust, score, isForcedSkip) {
       if (isForcedSkip) return '高風險帳號，直接排除';
       if (finalTrust >= 4 && data.conversion >= 4) return '高轉單潛力，適合直接導購';
@@ -1010,7 +1009,7 @@
       el.className = 'badge';
       if (text === 'Priority') el.classList.add('priority');
       else if (text === 'Test') el.classList.add('test');
-      else if (text === 'Skip') el.classList.add('skip');
+      else if (text === 'Observe') el.classList.add('skip');
     }
 
     function renderCoopBadge(type, label) {
