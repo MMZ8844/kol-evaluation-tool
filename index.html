@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KOL 評估工具 v8</title>
+  <title>KOL 評估工具 v9</title>
   <style>
     :root{
       --bg:#f7f7f5;
@@ -21,11 +21,11 @@
       --red-bg:#fee2e2;
       --yellow:#a16207;
       --yellow-bg:#fef3c7;
-      --accent:#111827;
       --blue:#1d4ed8;
       --blue-bg:#dbeafe;
       --purple:#7c3aed;
       --purple-bg:#ede9fe;
+      --accent:#111827;
     }
 
     *{box-sizing:border-box}
@@ -143,7 +143,6 @@
       color:var(--text);
       transition:.15s ease;
     }
-
     input:focus,
     select:focus,
     .multi-trigger:focus{
@@ -294,7 +293,7 @@
     }
     .priority{background:var(--green-bg);color:var(--green)}
     .test{background:var(--orange-bg);color:var(--orange)}
-    .skip{background:var(--red-bg);color:var(--red)}
+    .observe{background:var(--yellow-bg);color:var(--yellow)}
 
     .coop-badge{
       display:inline-flex;
@@ -324,11 +323,61 @@
       font-size:12px;
       color:var(--muted);
       margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:6px;
     }
     .note-box .text{
       font-size:14px;
       color:#374151;
       font-weight:700;
+    }
+
+    .info-wrap{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+    }
+    .info-icon{
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      border:1px solid #cbd5e1;
+      color:#64748b;
+      font-size:11px;
+      font-weight:800;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:default;
+      background:#fff;
+      line-height:1;
+    }
+    .tooltip{
+      position:absolute;
+      left:22px;
+      top:-4px;
+      min-width:240px;
+      max-width:300px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#fff;
+      color:#475569;
+      font-size:12px;
+      font-weight:500;
+      box-shadow:var(--shadow);
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(4px);
+      transition:.15s ease;
+      z-index:30;
+      pointer-events:none;
+    }
+    .info-wrap:hover .tooltip{
+      opacity:1;
+      visibility:visible;
+      transform:translateY(0);
     }
 
     .history-list{
@@ -438,6 +487,7 @@
       font-weight:700;
     }
     .bonus-tag{background:#ecfdf3;color:var(--green)}
+    .pro-tag{background:#ede9fe;color:var(--purple)}
 
     @media (max-width:1000px){
       .layout{grid-template-columns:1fr}
@@ -447,6 +497,11 @@
       .grid,.result-top,.mode-grid,.sub-grid{grid-template-columns:1fr}
       .wrap{margin-top:18px}
       .page-title h1{font-size:24px}
+      .tooltip{
+        left:0;
+        top:22px;
+        min-width:220px;
+      }
     }
   </style>
 </head>
@@ -489,7 +544,7 @@
                   <div class="multi-panel" id="contentTypePanel"></div>
                 </div>
                 <div class="selected-tags" id="contentTypeTags"></div>
-                <div class="hint">若包含「高知女性(TA)」，最終 Score 會額外 +0.3。</div>
+                <div class="hint">高知女性(TA) 會額外 +0.3；醫學/營養類專業人士不加總分，但會放寬付費募資頁判斷條件。</div>
               </div>
               <div class="field">
                 <label for="firstImpression">一句話直覺 <span class="meta-label">選填</span></label>
@@ -583,7 +638,13 @@
               <div class="flag-group level2">
                 <h4>🟠 Level2（壓 Trust）</h4>
                 <div class="flag-item"><input type="checkbox" id="flag_noreply" data-flag-level="2" data-flag-label="不回留言"><div><span>不回留言</span><small>Trust 上限壓到 2</small></div></div>
-                <div class="flag-item"><input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="沒有篩選過推薦或曝光的產品"><div><span>會降低推薦可信度</span><small>Trust 上限壓到 2</small></div></div>
+                <div class="flag-item">
+                  <input type="checkbox" id="flag_nofilter" data-flag-level="2" data-flag-label="沒有篩選過推薦或曝光的產品">
+                  <div>
+                    <span>沒有篩選過推薦或曝光的產品</span>
+                    <small>會降低推薦可信度，Trust 上限壓到 2</small>
+                  </div>
+                </div>
                 <div class="flag-item"><input type="checkbox" id="flag_contentfarm" data-flag-level="2" data-flag-label="內容農場"><div><span>內容農場</span><small>Trust 上限壓到 2</small></div></div>
               </div>
 
@@ -641,19 +702,70 @@
           <div class="card-body">
             <div class="result-box">
               <div class="result-top">
-                <div class="stat"><div class="k">Score</div><div class="v" id="resultScore">-</div></div>
-                <div class="stat"><div class="k">結果分類</div><div id="resultCategory" class="badge">-</div></div>
-                <div class="stat"><div class="k">模式</div><div class="v" id="resultMode" style="font-size:20px;">-</div></div>
+                <div class="stat">
+                  <div class="k">Score</div>
+                  <div class="v" id="resultScore">-</div>
+                </div>
+                <div class="stat">
+                  <div class="k">結果分類</div>
+                  <div id="resultCategory" class="badge">-</div>
+                </div>
+                <div class="stat">
+                  <div class="k">模式</div>
+                  <div class="v" id="resultMode" style="font-size:20px;">-</div>
+                </div>
               </div>
 
-              <div class="note-box"><div class="title">判斷</div><div class="text" id="resultReason">尚未評估。</div></div>
-              <div class="note-box"><div class="title">是否值得投入正式合作資源</div><div class="text" id="resourceDecision">尚未評估。</div></div>
-              <div class="note-box"><div class="title">建議合作形式</div><div class="text" id="suggestedCoop">尚未評估。</div></div>
-              <div class="note-box"><div class="title">合作形式標籤</div><div id="coopBadgeWrap" class="text">尚未評估。</div></div>
-              <div class="note-box"><div class="title">互動率校正狀態</div><div class="text" id="engagementNote">尚未計算。</div></div>
-              <div class="note-box"><div class="title">最終 Engagement</div><div class="text" id="finalEngagementText">-</div></div>
-              <div class="note-box"><div class="title">內容類型加分</div><div class="text" id="contentTypeBonusText">未啟用。</div></div>
-              <div class="note-box"><div class="title">策略標記</div><div class="text" id="strategyNote">未標記。</div></div>
+              <div class="note-box">
+                <div class="title">建議合作形式</div>
+                <div class="text" id="suggestedCoop">尚未評估。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">是否值得投入正式合作資源</div>
+                <div class="text" id="resourceDecision">尚未評估。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">合作形式標籤</div>
+                <div id="coopBadgeWrap" class="text">尚未評估。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">判斷</div>
+                <div class="text" id="resultReason">尚未評估。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">互動率校正狀態</div>
+                <div class="text" id="engagementNote">尚未計算。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">
+                  最終互動分數
+                  <span class="info-wrap">
+                    <span class="info-icon">i</span>
+                    <span class="tooltip">系統實際採用的互動分數。若有完整公開數據，會依互動率自動校正；低於 1% 偏低，約 2% 為普通，5% 以上偏高。</span>
+                  </span>
+                </div>
+                <div class="text" id="finalEngagementText">-</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">內容類型效果</div>
+                <div class="text" id="contentTypeBonusText">未啟用。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">專業背書條件</div>
+                <div class="text" id="professionalRuleText">未觸發。</div>
+              </div>
+
+              <div class="note-box">
+                <div class="title">策略標記</div>
+                <div class="text" id="strategyNote">未標記。</div>
+              </div>
             </div>
           </div>
         </div>
@@ -669,7 +781,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'kol_evaluation_records_v8';
+    const STORAGE_KEY = 'kol_evaluation_records_v9';
     const scoreSelectIds = ['engagement','trust','conversion','audience','brand','contentScore'];
 
     const CONTENT_TYPE_OPTIONS = [
@@ -752,7 +864,9 @@
       valueEl.textContent = selected.join('、');
       valueEl.className = 'value';
       tagsEl.innerHTML = selected.map(item => {
-        const cls = item === '高知女性(TA)' ? 'tag bonus-tag' : 'tag';
+        let cls = 'tag';
+        if (item === '高知女性(TA)') cls = 'tag bonus-tag';
+        if (item === '醫學/營養類專業人士') cls = 'tag pro-tag';
         return `<span class="${cls}">${item}</span>`;
       }).join('');
     }
@@ -806,118 +920,121 @@
       return 1;
     }
 
-   function classifyScore(score) {
-     if (score >= 4.2) return 'Priority';
-     if (score >= 3.5) return 'Test';
-     return 'Observe';
-   }
+    function classifyScore(score) {
+      if (score >= 4.2) return 'Priority';
+      if (score >= 3.5) return 'Test';
+      return 'Observe';
+    }
+
     function generateReason(data, finalTrust, score, isForcedSkip) {
       if (isForcedSkip) return '高風險帳號，直接排除';
+      if (score < 3.5) return '整體偏弱，暫不建議投入';
+      if (data.resourceDecision && data.resourceDecision.includes('觀察')) return '帳號有一定價值，但目前較適合觀察或低成本接觸';
+      if (data.suggestedCooperation === '付費募資頁') return '具備信任與背書價值，適合放大可信度';
       if (finalTrust >= 4 && data.conversion >= 4) return '高轉單潛力，適合直接導購';
       if (data.finalEngagement >= 4 && finalTrust >= 4) return '高互動＋高信任，適合經營型合作';
       if (finalTrust <= 2) return '信任不足，轉單風險高';
       if (score >= 4) return '整體表現穩定，可優先測試';
-      if (score >= 3.5) return '中性帳號，建議小量測試';
-      return '整體偏弱，暫不建議投入';
+      return '中性帳號，建議小量測試';
     }
 
-function getSuggestedCooperation(data) {
+    function getSuggestedCooperation(data) {
+      const isProfessional = (data.contentTypes || []).includes('醫學/營養類專業人士');
 
-  const isProfessional = (data.contentTypes || []).includes('醫學/營養類專業人士');
+      if (data.isForcedSkip) {
+        return {
+          resourceDecision: '不值得投入正式合作資源',
+          cooperation: '不合作',
+          cooperationType: 'none',
+          professionalRuleText: isProfessional ? '已選擇專業人士，但因 Level1 紅旗不適用。' : '未觸發。'
+        };
+      }
 
-  if (data.isForcedSkip) {
-    return {
-      resourceDecision: '不投入',
-      cooperation: '不合作',
-      cooperationType: 'none'
-    };
-  }
+      if (data.score < 3.5) {
+        return {
+          resourceDecision: '不值得投入正式合作資源',
+          cooperation: '不合作',
+          cooperationType: 'none',
+          professionalRuleText: isProfessional ? '已選擇專業人士，但分數未達可放寬門檻。' : '未觸發。'
+        };
+      }
 
-  // 低分 → 不做
-  if (data.score < 3.5) {
-    return {
-      resourceDecision: '不投入',
-      cooperation: '不合作',
-      cooperationType: 'none'
-    };
-  }
+      const normalCrowdRule =
+        data.trustForSuggestion >= 4 &&
+        data.brand >= 4 &&
+        data.score >= 4.2;
 
-  // 高價值但不匹配 → 公關品
-  if (
-    data.score >= 4.0 &&
-    (data.brand <= 2 || data.audience <= 2)
-  ) {
-    return {
-      resourceDecision: '暫不投入（觀察名單）',
-      cooperation: '公關品',
-      cooperationType: 'pr'
-    };
-  }
+      const professionalCrowdRule =
+        isProfessional &&
+        data.trustForSuggestion >= 4 &&
+        data.brand >= 3 &&
+        data.score >= 4.0;
 
-  // ⭐⭐⭐ 核心修改在這裡 ⭐⭐⭐
-  // 募資頁判斷（專業人士放寬條件）
+      if (normalCrowdRule || professionalCrowdRule) {
+        return {
+          resourceDecision: '值得投入正式合作資源',
+          cooperation: '付費募資頁',
+          cooperationType: 'crowd',
+          professionalRuleText: professionalCrowdRule && !normalCrowdRule
+            ? '已觸發：醫學/營養類專業人士，募資頁判斷門檻放寬'
+            : (isProfessional ? '已選擇專業人士，但本次即使不放寬也符合募資頁條件。' : '未觸發。')
+        };
+      }
 
-  if (
-    (
-      // 一般條件
-      data.trustForSuggestion >= 4 &&
-      data.brand >= 4 &&
-      data.score >= 4.2
-    )
-    ||
-    (
-      // 專業人士條件（放寬）
-      isProfessional &&
-      data.trustForSuggestion >= 4 &&
-      data.brand >= 3 &&
-      data.score >= 4.0
-    )
-  ) {
-    return {
-      resourceDecision: '投入',
-      cooperation: '付費募資頁',
-      cooperationType: 'crowd'
-    };
-  }
+      const highValuePRCondition =
+        data.score >= 4.0 &&
+        (data.brand <= 2 || data.audience <= 2);
 
-  // 高分 → 付費曝光
-  if (data.score >= 4.2) {
-    if (data.conversion >= 4) {
+      if (highValuePRCondition) {
+        return {
+          resourceDecision: '暫不建議投入正式合作資源，但可列入高價值觀察名單',
+          cooperation: '公關品',
+          cooperationType: 'pr',
+          professionalRuleText: isProfessional ? '已選擇專業人士，但本次未達募資頁條件。' : '未觸發。'
+        };
+      }
+
+      if (data.score >= 4.2) {
+        if (data.conversion >= 4) {
+          return {
+            resourceDecision: '值得投入正式合作資源',
+            cooperation: '付費曝光',
+            cooperationType: 'paid',
+            professionalRuleText: isProfessional ? '已選擇專業人士，但本次未達募資頁條件。' : '未觸發。'
+          };
+        }
+        return {
+          resourceDecision: '值得投入正式合作資源',
+          cooperation: '互惠曝光',
+          cooperationType: 'barter',
+          professionalRuleText: isProfessional ? '已選擇專業人士，但本次未達募資頁條件。' : '未觸發。'
+        };
+      }
+
+      if (data.score >= 3.5) {
+        if (data.conversion >= 3) {
+          return {
+            resourceDecision: '可小量投入正式合作資源測試',
+            cooperation: '互惠曝光',
+            cooperationType: 'barter',
+            professionalRuleText: isProfessional ? '已選擇專業人士，但本次未達募資頁條件。' : '未觸發。'
+          };
+        }
+        return {
+          resourceDecision: '暫不建議投入正式合作資源，但可列入高價值觀察名單',
+          cooperation: '公關品',
+          cooperationType: 'pr',
+          professionalRuleText: isProfessional ? '已選擇專業人士，但本次未達募資頁條件。' : '未觸發。'
+        };
+      }
+
       return {
-        resourceDecision: '投入',
-        cooperation: '付費曝光',
-        cooperationType: 'paid'
+        resourceDecision: '不值得投入正式合作資源',
+        cooperation: '不合作',
+        cooperationType: 'none',
+        professionalRuleText: isProfessional ? '已選擇專業人士，但分數未達可放寬門檻。' : '未觸發。'
       };
     }
-    return {
-      resourceDecision: '投入',
-      cooperation: '互惠曝光',
-      cooperationType: 'barter'
-    };
-  }
-
-  // 中分
-  if (data.score >= 3.5) {
-    if (data.conversion >= 3) {
-      return {
-        resourceDecision: '小量投入測試',
-        cooperation: '互惠曝光',
-        cooperationType: 'barter'
-      };
-    }
-    return {
-      resourceDecision: '觀察',
-      cooperation: '公關品',
-      cooperationType: 'pr'
-    };
-  }
-
-  return {
-    resourceDecision: '不投入',
-    cooperation: '不合作',
-    cooperationType: 'none'
-  };
-}
 
     function evaluate(data = collectFormData()) {
       const level1 = data.flags.some(f => f.level === 1);
@@ -926,7 +1043,14 @@ function getSuggestedCooperation(data) {
 
       const hasKnowledgeFemale = (data.contentTypes || []).includes('高知女性(TA)');
       const contentTypeBonus = hasKnowledgeFemale ? 0.3 : 0;
-      const contentTypeBonusNote = hasKnowledgeFemale ? '已啟用：高知女性(TA) +0.3' : '未啟用。';
+
+      let contentTypeEffectText = '未啟用。';
+      if (hasKnowledgeFemale) {
+        contentTypeEffectText = '已啟用：高知女性(TA) +0.3';
+      } else if ((data.contentTypes || []).includes('醫學/營養類專業人士')) {
+        contentTypeEffectText = '已啟用：醫學/營養類專業人士（不加總分，影響募資頁判斷）';
+      }
+
       const strategyNote = data.cocreatePotential ? '可作產品共創（專業型）' : '未標記。';
 
       if (level1) {
@@ -939,18 +1063,19 @@ function getSuggestedCooperation(data) {
           engagementRatePercent: '',
           engagementNote: '未計算，因 Level1 紅旗直接淘汰',
           contentTypeBonus,
-          contentTypeBonusNote,
+          contentTypeEffectText,
           strategyNote,
           score: 0,
-          result: 'Skip',
+          result: 'Observe',
           isForcedSkip: true
         };
 
         const coopDecision = getSuggestedCooperation(forced);
-        forced.reason = generateReason(forced, forced.finalTrust, forced.score, true);
         forced.resourceDecision = coopDecision.resourceDecision;
         forced.suggestedCooperation = coopDecision.cooperation;
         forced.cooperationType = coopDecision.cooperationType;
+        forced.professionalRuleText = coopDecision.professionalRuleText;
+        forced.reason = generateReason(forced, forced.finalTrust, forced.score, true);
         return forced;
       }
 
@@ -1008,7 +1133,7 @@ function getSuggestedCooperation(data) {
         engagementRatePercent,
         engagementNote,
         contentTypeBonus,
-        contentTypeBonusNote,
+        contentTypeEffectText,
         strategyNote,
         score: Number(score.toFixed(1)),
         result: classifyScore(score),
@@ -1016,10 +1141,11 @@ function getSuggestedCooperation(data) {
       };
 
       const coopDecision = getSuggestedCooperation(evaluated);
-      evaluated.reason = generateReason(evaluated, finalTrust, score, false);
       evaluated.resourceDecision = coopDecision.resourceDecision;
       evaluated.suggestedCooperation = coopDecision.cooperation;
       evaluated.cooperationType = coopDecision.cooperationType;
+      evaluated.professionalRuleText = coopDecision.professionalRuleText;
+      evaluated.reason = generateReason(evaluated, finalTrust, score, false);
 
       return evaluated;
     }
@@ -1028,9 +1154,10 @@ function getSuggestedCooperation(data) {
       const el = document.getElementById('resultCategory');
       el.textContent = text;
       el.className = 'badge';
+
       if (text === 'Priority') el.classList.add('priority');
       else if (text === 'Test') el.classList.add('test');
-      else if (text === 'Observe') el.classList.add('skip');
+      else if (text === 'Observe') el.classList.add('observe');
     }
 
     function renderCoopBadge(type, label) {
@@ -1055,13 +1182,14 @@ function getSuggestedCooperation(data) {
       document.getElementById('resultScore').textContent = evaluated.isForcedSkip ? '-' : evaluated.score.toFixed(1);
       document.getElementById('resultMode').textContent = evaluated.mode || '-';
       setResultBadge(evaluated.result);
-      document.getElementById('resultReason').textContent = `${evaluated.result}｜${evaluated.reason}`;
-      document.getElementById('resourceDecision').textContent = evaluated.resourceDecision || '-';
       document.getElementById('suggestedCoop').textContent = evaluated.suggestedCooperation || '-';
+      document.getElementById('resourceDecision').textContent = evaluated.resourceDecision || '-';
       renderCoopBadge(evaluated.cooperationType, evaluated.suggestedCooperation);
+      document.getElementById('resultReason').textContent = `${evaluated.result}｜${evaluated.reason}`;
       document.getElementById('engagementNote').textContent = evaluated.engagementNote || '-';
       document.getElementById('finalEngagementText').textContent = evaluated.finalEngagement ?? '-';
-      document.getElementById('contentTypeBonusText').textContent = evaluated.contentTypeBonusNote || '未啟用。';
+      document.getElementById('contentTypeBonusText').textContent = evaluated.contentTypeEffectText || '未啟用。';
+      document.getElementById('professionalRuleText').textContent = evaluated.professionalRuleText || '未觸發。';
       document.getElementById('strategyNote').textContent = evaluated.strategyNote || '未標記。';
     }
 
@@ -1098,7 +1226,7 @@ function getSuggestedCooperation(data) {
       }
 
       list.innerHTML = records.map(record => {
-        const cls = record.result === 'Priority' ? 'priority' : record.result === 'Test' ? 'test' : 'skip';
+        const cls = record.result === 'Priority' ? 'priority' : record.result === 'Test' ? 'test' : 'observe';
         return `
           <div class="history-item">
             <div class="history-head">
@@ -1182,14 +1310,16 @@ function getSuggestedCooperation(data) {
 
       document.getElementById('resultScore').textContent = '-';
       document.getElementById('resultMode').textContent = '-';
-      document.getElementById('resultReason').textContent = '尚未評估。';
-      document.getElementById('resourceDecision').textContent = '尚未評估。';
       document.getElementById('suggestedCoop').textContent = '尚未評估。';
+      document.getElementById('resourceDecision').textContent = '尚未評估。';
+      document.getElementById('resultReason').textContent = '尚未評估。';
       document.getElementById('engagementNote').textContent = '尚未計算。';
       document.getElementById('finalEngagementText').textContent = '-';
       document.getElementById('contentTypeBonusText').textContent = '未啟用。';
+      document.getElementById('professionalRuleText').textContent = '未觸發。';
       document.getElementById('strategyNote').textContent = '未標記。';
       document.getElementById('coopBadgeWrap').textContent = '尚未評估。';
+
       const badge = document.getElementById('resultCategory');
       badge.textContent = '-';
       badge.className = 'badge';
@@ -1252,7 +1382,8 @@ function getSuggestedCooperation(data) {
         '模式',
         'finalEngagement',
         '互動率',
-        '內容類型加分',
+        '內容類型效果',
+        '專業背書條件',
         'Score',
         '結果',
         '是否值得投入正式合作資源',
@@ -1280,7 +1411,8 @@ function getSuggestedCooperation(data) {
         r.mode || '',
         r.finalEngagement ?? '',
         r.engagementRatePercent || '',
-        r.contentTypeBonus || '',
+        r.contentTypeEffectText || '',
+        r.professionalRuleText || '',
         r.scoreDisplay ?? '',
         r.result || '',
         r.resourceDecision || '',
