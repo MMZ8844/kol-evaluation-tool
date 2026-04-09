@@ -34,7 +34,7 @@
     input[type="text"], input[type="number"], select{
       width:100%;border:1px solid #d1d5db;border-radius:12px;background:#fff;padding:11px 12px;font-size:14px;color:var(--text);transition:.15s ease
     }
-    input:focus, select:focus{outline:none;border-color:#9ca3af;box-shadow:0 0 0 4px rgba(17,24,39,.06)}
+    input:focus, select:focus, .multi-trigger:focus{outline:none;border-color:#9ca3af;box-shadow:0 0 0 4px rgba(17,24,39,.06)}
     .choice-grid{display:grid;gap:10px}
     .mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
     .sub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -79,6 +79,28 @@
     .history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .mini{padding:8px 10px;font-size:12px;border-radius:10px}
     .empty{color:var(--muted);font-size:14px;padding:6px 2px}
+
+    .multi-select{position:relative}
+    .multi-trigger{
+      width:100%; min-height:46px; border:1px solid #d1d5db; border-radius:12px; background:#fff; padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; font-size:14px;
+    }
+    .multi-trigger .value{flex:1; text-align:left; color:var(--text)}
+    .multi-trigger .placeholder{color:var(--muted)}
+    .multi-panel{
+      position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:20; display:none;
+      background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:10px; max-height:300px; overflow:auto;
+    }
+    .multi-panel.open{display:block}
+    .multi-option{
+      display:flex; align-items:flex-start; gap:10px; padding:8px 8px; border-radius:10px;
+    }
+    .multi-option:hover{background:var(--soft)}
+    .selected-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+    .tag{
+      display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; background:#f3f4f6; color:#374151; font-size:12px; font-weight:700;
+    }
+    .bonus-tag{background:#ecfdf3;color:var(--green)}
     @media (max-width:1000px){.layout{grid-template-columns:1fr}.flag-grid{grid-template-columns:1fr}}
     @media (max-width:680px){.grid,.result-top,.mode-grid,.sub-grid{grid-template-columns:1fr}.wrap{margin-top:18px}.page-title h1{font-size:24px}}
   </style>
@@ -113,8 +135,16 @@
             <h3>2️⃣ 基本觀察</h3>
             <div class="grid">
               <div class="field">
-                <label for="contentType">內容類型 <span class="meta-label">選填</span></label>
-                <input id="contentType" type="text" placeholder="例如：自炊教學／減脂食譜" />
+                <label>內容類型 <span class="meta-label">選填，可多選</span></label>
+                <div class="multi-select" id="contentTypeMulti">
+                  <button type="button" class="multi-trigger" id="contentTypeTrigger">
+                    <span class="value placeholder" id="contentTypeValue">請選擇內容類型</span>
+                    <span>▾</span>
+                  </button>
+                  <div class="multi-panel" id="contentTypePanel"></div>
+                </div>
+                <div class="selected-tags" id="contentTypeTags"></div>
+                <div class="hint">若包含「高知女性(TA)」，最終 Score 會額外 +0.3。</div>
               </div>
               <div class="field">
                 <label for="firstImpression">一句話直覺 <span class="meta-label">選填</span></label>
@@ -260,6 +290,7 @@
               <div class="note-box"><div class="title">判斷</div><div class="text" id="resultReason">尚未評估。</div></div>
               <div class="note-box"><div class="title">互動率校正狀態</div><div class="text" id="engagementNote">尚未計算。</div></div>
               <div class="note-box"><div class="title">最終 Engagement</div><div class="text" id="finalEngagementText">-</div></div>
+              <div class="note-box"><div class="title">內容類型加分</div><div class="text" id="contentTypeBonusText">未啟用。</div></div>
             </div>
           </div>
         </div>
@@ -273,8 +304,12 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'kol_evaluation_records_v5';
+    const STORAGE_KEY = 'kol_evaluation_records_v6';
     const scoreSelectIds = ['engagement','trust','conversion','audience','brand','contentScore'];
+    const CONTENT_TYPE_OPTIONS = [
+      '高知女性(TA)','健身','瑜珈','其他運動','醫學/營養類專業人士','烹飪教學',
+      '美食分享/探店','美妝','母嬰/育兒','自我提升/身心靈','生活方式 / lifestyle','其他內容創作者'
+    ];
 
     function initScoreSelects() {
       scoreSelectIds.forEach(id => {
@@ -288,6 +323,62 @@
           el.appendChild(option);
         }
       });
+    }
+
+    function initContentTypeMultiSelect() {
+      const panel = document.getElementById('contentTypePanel');
+      panel.innerHTML = CONTENT_TYPE_OPTIONS.map((item, index) => `
+        <label class="multi-option">
+          <input type="checkbox" class="content-type-option" value="${item}" id="content_type_${index}">
+          <span>${item}</span>
+        </label>
+      `).join('');
+
+      document.getElementById('contentTypeTrigger').addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('open');
+      });
+
+      panel.addEventListener('click', (e) => e.stopPropagation());
+      document.addEventListener('click', () => panel.classList.remove('open'));
+
+      panel.querySelectorAll('.content-type-option').forEach(chk => {
+        chk.addEventListener('change', renderContentTypeSelection);
+      });
+
+      renderContentTypeSelection();
+    }
+
+    function getSelectedContentTypes() {
+      return [...document.querySelectorAll('.content-type-option:checked')].map(el => el.value);
+    }
+
+    function setSelectedContentTypes(values) {
+      const set = new Set(values || []);
+      document.querySelectorAll('.content-type-option').forEach(chk => {
+        chk.checked = set.has(chk.value);
+      });
+      renderContentTypeSelection();
+    }
+
+    function renderContentTypeSelection() {
+      const selected = getSelectedContentTypes();
+      const valueEl = document.getElementById('contentTypeValue');
+      const tagsEl = document.getElementById('contentTypeTags');
+
+      if (!selected.length) {
+        valueEl.textContent = '請選擇內容類型';
+        valueEl.className = 'value placeholder';
+        tagsEl.innerHTML = '';
+        return;
+      }
+
+      valueEl.textContent = selected.join('、');
+      valueEl.className = 'value';
+      tagsEl.innerHTML = selected.map(item => {
+        const cls = item === '高知女性(TA)' ? 'tag bonus-tag' : 'tag';
+        return `<span class="${cls}">${item}</span>`;
+      }).join('');
     }
 
     function safeNumber(value) {
@@ -312,7 +403,7 @@
       return {
         accountName: document.getElementById('accountName').value.trim(),
         followers: safeNumber(document.getElementById('followers').value),
-        contentType: document.getElementById('contentType').value.trim(),
+        contentTypes: getSelectedContentTypes(),
         firstImpression: document.getElementById('firstImpression').value.trim(),
         avgLikes: safeNumber(document.getElementById('avgLikes').value),
         commentCount: safeNumber(document.getElementById('commentCount').value),
@@ -358,6 +449,9 @@
       const level1 = data.flags.some(f => f.level === 1);
       const level2 = data.flags.some(f => f.level === 2);
       const level3 = data.flags.some(f => f.level === 3);
+      const hasKnowledgeFemale = (data.contentTypes || []).includes('高知女性(TA)');
+      const contentTypeBonus = hasKnowledgeFemale ? 0.3 : 0;
+      const contentTypeBonusNote = hasKnowledgeFemale ? '已啟用：高知女性(TA) +0.3' : '未啟用。';
 
       if (level1) {
         const forced = {
@@ -367,6 +461,8 @@
           engagementRate: null,
           engagementRatePercent: '',
           engagementNote: '未計算，因 Level1 紅旗直接淘汰',
+          contentTypeBonus,
+          contentTypeBonusNote,
           score: 0,
           result: 'Skip',
           isForcedSkip: true
@@ -407,6 +503,7 @@
       }
 
       if (level3) score -= 0.5;
+      score += contentTypeBonus;
       score = Math.max(0, score);
 
       const evaluated = {
@@ -416,6 +513,8 @@
         engagementRate,
         engagementRatePercent,
         engagementNote,
+        contentTypeBonus,
+        contentTypeBonusNote,
         score: Number(score.toFixed(1)),
         result: classifyScore(score),
         isForcedSkip: false
@@ -440,6 +539,7 @@
       document.getElementById('resultReason').textContent = `${evaluated.result}｜${evaluated.reason}`;
       document.getElementById('engagementNote').textContent = evaluated.engagementNote || '-';
       document.getElementById('finalEngagementText').textContent = evaluated.finalEngagement ?? '-';
+      document.getElementById('contentTypeBonusText').textContent = evaluated.contentTypeBonusNote || '未啟用。';
     }
 
     function getRecords() {
@@ -485,6 +585,7 @@
               </div>
               <div class="badge ${cls}">${record.result}</div>
             </div>
+            <div class="history-meta">內容類型：${escapeHtml((record.contentTypes || []).join('、') || '-')}</div>
             <div class="history-actions">
               <button class="btn-soft mini" onclick="loadRecord('${encodeURIComponent(record.accountName)}')">載入</button>
               <button class="btn-soft mini" onclick="deleteRecord('${encodeURIComponent(record.accountName)}')">刪除</button>
@@ -497,7 +598,7 @@
     function fillForm(record) {
       document.getElementById('accountName').value = record.accountName || '';
       document.getElementById('followers').value = record.followers ?? '';
-      document.getElementById('contentType').value = record.contentType || '';
+      setSelectedContentTypes(record.contentTypes || []);
       document.getElementById('firstImpression').value = record.firstImpression || '';
       document.getElementById('avgLikes').value = record.avgLikes ?? '';
       document.getElementById('commentCount').value = record.commentCount ?? '';
@@ -540,7 +641,7 @@
     function resetForm() {
       document.getElementById('accountName').value = '';
       document.getElementById('followers').value = '';
-      document.getElementById('contentType').value = '';
+      setSelectedContentTypes([]);
       document.getElementById('firstImpression').value = '';
       document.getElementById('avgLikes').value = '';
       document.getElementById('commentCount').value = '';
@@ -557,6 +658,7 @@
       document.getElementById('resultReason').textContent = '尚未評估。';
       document.getElementById('engagementNote').textContent = '尚未計算。';
       document.getElementById('finalEngagementText').textContent = '-';
+      document.getElementById('contentTypeBonusText').textContent = '未啟用。';
       const badge = document.getElementById('resultCategory');
       badge.textContent = '-';
       badge.className = 'badge';
@@ -598,13 +700,13 @@
 
       const headers = [
         '帳號名稱','粉絲數','內容類型','一句話直覺','平均讚數','留言數','留言品質','讚數不可見','留言數不可見',
-        'Engagement','Trust','Conversion','Audience','Brand','Content','模式','finalEngagement','互動率','Score','結果','紅旗'
+        'Engagement','Trust','Conversion','Audience','Brand','Content','模式','finalEngagement','互動率','內容類型加分','Score','結果','紅旗'
       ];
 
       const rows = records.map(r => [
         r.accountName || '',
         r.followers ?? '',
-        r.contentType || '',
+        (r.contentTypes || []).join(' / '),
         r.firstImpression || '',
         r.avgLikes ?? '',
         r.commentCount ?? '',
@@ -620,6 +722,7 @@
         r.mode || '',
         r.finalEngagement ?? '',
         r.engagementRatePercent || '',
+        r.contentTypeBonus || '',
         r.scoreDisplay ?? '',
         r.result || '',
         (r.flags || []).map(f => f.label).join(' / ')
@@ -648,6 +751,7 @@
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
 
     initScoreSelects();
+    initContentTypeMultiSelect();
     renderHistory();
     resetForm();
   </script>
